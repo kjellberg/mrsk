@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Find MRSK's root directory
+SCRIPT_PATH=$(realpath $0)
+MRSK_ROOT=$(dirname $(dirname $(dirname $SCRIPT_PATH)))
+
+# Get current MRSK version number
+VERSION=$(grep -m1 -o 'VERSION = ".*"' $MRSK_ROOT/lib/mrsk/version.rb | sed 's/VERSION = "\(.*\)"/\1/')
+
+# Set the 'MRSK_IMAGE' to the Docker image name
+MRSK_IMAGE="ghcr.io/mrsked/mrsk:v$VERSION"
+
+# Set the '-it' flag if the OS is macOS or Linux
+if [ "$(uname)" = "Darwin" ] || [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
+  DOCKER_FLAGS='-it'
+else
+  DOCKER_FLAGS=''
+fi
+
+# Execute the 'docker run' command with the specified flags and arguments
+# Set the '--volume' flag to mount the current directory and the Docker socket
+docker run --rm "$DOCKER_FLAGS" -v "$PWD:/workdir" -v "/var/run/docker.sock:/var/run/docker.sock:rw" "$MRSK_IMAGE" "$@"
